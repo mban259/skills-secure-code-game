@@ -28,7 +28,7 @@ class TaxPayer:
             pass
 
         # defends against path traversal attacks
-        if path.startswith('/') or path.startswith('..'):
+        if not safe_path(path):
             return None
 
         # builds path
@@ -47,9 +47,20 @@ class TaxPayer:
 
         if not path:
             raise Exception("Error: Tax form is required for all users")
-
+        if not safe_path(path):
+            return None
         with open(path, 'rb') as form:
             tax_data = bytearray(form.read())
 
         # assume that tax data is returned on screen after this
         return path
+
+def safe_path(path: str) -> bool:
+    """相対パスpathが安全か判定する"""
+    # 現在のパス
+    base_dir: str = os.path.dirname(os.path.abspath(__file__))
+    # 引数の絶対パスの正規化
+    file_path: str = os.path.normpath(os.path.join(base_dir, path))
+    # カレントディレクトリと引数のパスが一致する (引数のパスはbase_dir以下)ならok
+    common: str = os.path.commonpath([base_dir, file_path])
+    return common == base_dir
